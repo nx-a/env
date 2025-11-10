@@ -19,7 +19,27 @@ func Get[T any](env *Environment, name string) T {
 			fmt.Println("Recovered in f", r)
 		}
 	}()
-	return conv.To[T](content)
+	return conv.To[T](env.getenv(content))
+}
+
+func (env *Environment) getenv(val interface{}) interface{} {
+	if _, ok := val.(string); !ok {
+		return val
+	}
+	value := val.(string)
+	if isEnv.MatchString(value) {
+		find := isEnv.FindStringSubmatch(value)
+		sub := strings.SplitN(find[1], ":", 2)
+		envOs := os.Getenv(sub[0])
+		if len(envOs) > 0 {
+			return envOs
+		}
+		if len(sub) > 1 {
+			return sub[1]
+		}
+		return nil
+	}
+	return val
 }
 
 type Environment struct {
