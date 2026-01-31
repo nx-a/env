@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/nx-a/conv"
 	"gopkg.in/yaml.v3"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -56,13 +58,24 @@ func New(emb embed.FS) *Environment {
 	env.mutex.Lock()
 	defer env.mutex.Unlock()
 	env.data = convertYamlToProp([]byte(def))
-	file, err := emb.ReadFile("config.yml")
+	err := fs.WalkDir(emb, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && filepath.Ext(path) == ".yml" {
+			file, _err := emb.ReadFile(path)
+			if _err != nil {
+				return nil
+			}
+			subenv := convertYamlToProp(file)
+			for key, value := range subenv {
+				env.data[key] = value
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return nil
-	}
-	subenv := convertYamlToProp(file)
-	for key, value := range subenv {
-		env.data[key] = value
 	}
 	return env
 }
