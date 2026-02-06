@@ -120,8 +120,14 @@ func GetInterface(env *Environment, name string) interface{} {
 	}
 	return val
 }
-func (e *Environment) Get(name string) string {
-	return GetString(e, name)
+func (e *Environment) Get(name string) interface{} {
+	content := GetInterface(e, name)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+	return e.getenv(content)
 }
 func GetString(env *Environment, name string) string {
 	val := GetInterface(env, name)
