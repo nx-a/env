@@ -129,31 +129,6 @@ func (e *Environment) Get(name string) interface{} {
 	}()
 	return e.getenv(content)
 }
-func GetString(env *Environment, name string) string {
-	val := GetInterface(env, name)
-	if val == nil {
-		return ""
-	}
-	if reflect.TypeOf(val).Kind() != reflect.String {
-		return conv.To[string](val)
-	}
-	strVal := val.(string)
-	return checkEnv(strVal)
-}
-func checkEnv(value string) string {
-	if isEnv.MatchString(value) {
-		find := isEnv.FindStringSubmatch(value)
-		sub := strings.SplitN(find[1], ":", 2)
-		envOs := os.Getenv(sub[0])
-		if len(envOs) > 0 {
-			return envOs
-		}
-		if len(sub) > 1 {
-			return sub[1]
-		}
-	}
-	return strings.TrimSpace(value)
-}
 
 func convertYamlToProp(file []byte) map[string]interface{} {
 	var local map[string]interface{}
